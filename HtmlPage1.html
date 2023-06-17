@@ -1,0 +1,144 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        #city {
+            height: 200px;
+            width: 100%;
+            background-color: #9fc5e8;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .building {
+            width: 50px;
+            height: 100px;
+            position: absolute;
+            bottom: 0;
+            background-color: #888; /* Color representing superposition */
+        }
+
+        .observed {
+            background-color: #444; /* Color representing observed state */
+        }
+
+        #sun {
+            width: 60px;
+            height: 60px;
+            background-color: #ff0;
+            border-radius: 50%;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+
+        .residents {
+            position: absolute;
+            bottom: 105px;
+            width: 50px;
+            text-align: center;
+            color: white;
+            font-size: 10px;
+        }
+    </style>
+    <script>
+        var bankBalance = 1000;
+        var superpositionBalance = [1000, 2000, 3000, 4000, 5000];
+        var buildingCost = 100;
+        var incomePerResident = 1;
+        var buildings = [];
+        var buildingCapacity = 5;
+        var deathRate = 0.01; // 1% chance per second per resident
+        function Building() {
+            this.element = document.createElement("div");
+            this.element.className = "building";
+            this.element.style.left = Math.random() * (document.getElementById("city").offsetWidth - 50) + "px";
+            this.residents = 1;
+            this.capacity = buildingCapacity;
+            this.residentsElement = document.createElement("div");
+            this.residentsElement.className = "residents";
+            this.element.appendChild(this.residentsElement);
+            this.element.onclick = this.observe.bind(this);
+            this.updateResidentsDisplay();
+        }
+        Building.prototype.updateResidentsDisplay = function () {
+            this.residentsElement.textContent = this.residents + " / " + this.capacity;
+        };
+        Building.prototype.observe = function () {
+            this.element.className = "building observed";
+        };
+        function addBuilding() {
+            updateBank();
+            if (bankBalance >= buildingCost) {
+                var city = document.getElementById("city");
+                var building = new Building();
+                city.appendChild(building.element);
+                buildings.push(building);
+                bankBalance -= buildingCost;
+                updateBuildingCount();
+            } else {
+                alert("Not enough money in the bank to build!");
+            }
+        }
+
+        function updateBank() {
+            var observedBalance = superpositionBalance[Math.floor(Math.random() * superpositionBalance.length)];
+            bankBalance = observedBalance;
+            document.getElementById("bank").textContent = "Bank: $" + bankBalance;
+
+        }
+        function updateBuildingCount() {
+            document.getElementById("buildingCount").textContent = "Buildings: " + buildings.length;
+        }
+        function updateResidentCount() {
+            var totalResidents = buildings.reduce(function (sum, building) {
+                return sum + building.residents;
+            }, 0);
+            document.getElementById("residentCount").textContent = "Residents: " + totalResidents;
+        }
+        setInterval(function generateIncome() {
+            buildings.forEach(function (building) {
+                bankBalance += building.residents * incomePerResident;
+                building.updateResidentsDisplay();
+            });
+            updateBank();
+            updateResidentCount();
+        }, 1000);
+        setInterval(function addResidents() {
+            if (buildings.length > 0) {
+                var randomBuilding = buildings[Math.floor(Math.random() * buildings.length)];
+                if (randomBuilding.residents < randomBuilding.capacity) {
+                    randomBuilding.residents++;
+                    randomBuilding.updateResidentsDisplay();
+                }
+            }
+            updateResidentCount();
+            updateResidentCount();
+        }, 10000);
+        setInterval(function simulateDeaths() {
+            buildings.forEach(function (building) {
+                if (building.residents > 0 && Math.random() < deathRate) {
+                    building.residents--;
+                    building.updateResidentsDisplay();
+                }
+            });
+            updateResidentCount();
+        }, 1000);
+        window.onload = function () {
+            document.getElementById("addBuilding").onclick = addBuilding;
+            updateBank();
+            updateBuildingCount();
+            updateResidentCount();
+        };
+    </script>
+</head>
+<body>
+    <div id="city">
+        <div id="sun"></div>
+    </div>
+    <button id="addBuilding">Add Building</button>
+    <div id="bank">Bank: $</div>
+    <div id="buildingCount">Buildings: </div>
+    <div id="residentCount">Residents: </div>
+</body>
+</html>
